@@ -1,0 +1,15 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Vector store (too large for github)
+data/vector_store/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# OS
+.DS_Store
