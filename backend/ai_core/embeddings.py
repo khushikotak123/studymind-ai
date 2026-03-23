@@ -25,17 +25,22 @@ class HFEmbeddings(Embeddings):
     def _embed(self, text: str) -> List[float]:
         try:
             HF_TOKEN = os.getenv("HF_TOKEN")
+            print(f"HF_TOKEN exists: {bool(HF_TOKEN)}")
             response = requests.post(
                 "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2",
                 headers={"Authorization": f"Bearer {HF_TOKEN}"},
-                json={"inputs": text[:512]}
+                json={"inputs": text[:512]},
+                timeout=30
             )
+            print(f"Status: {response.status_code}")
+            print(f"Response: {response.text[:200]}")
             data = response.json()
-            print(f"HF response: {str(data)[:100]}")
-            if isinstance(data, list):
+            if isinstance(data, list) and len(data) > 0:
                 if isinstance(data[0], list):
                     return data[0]
-                return data
+                if isinstance(data[0], float):
+                    return data
+            print(f"Unexpected format: {type(data)}")
             return [0.0] * 384
         except Exception as e:
             print(f"Embedding error: {e}")
@@ -73,4 +78,3 @@ def load_vectorstore(index_name: str):
         embeddings,
         allow_dangerous_deserialization=True
     )
-
