@@ -1,21 +1,35 @@
 import os
+import requests
+import numpy as np
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings.base import Embeddings
+from typing import List
 
 load_dotenv()
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 VECTOR_STORE_PATH = os.path.join(os.path.dirname(__file__), "../../data/vector_store")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+
+class GroqEmbeddings(Embeddings):
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return [self._embed(t) for t in texts]
+
+    def embed_query(self, text: str) -> List[float]:
+        return self._embed(text)
+
+    def _embed(self, text: str) -> List[float]:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/embeddings",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={"model": "nomic-embed-text-v1.5", "input": text}
+        )
+        return response.json()["data"][0]["embedding"]
 
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name=EMBED_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
-    )
+    return GroqEmbeddings()
 
 def ingest_pdf(pdf_path: str, index_name: str):
     print(f"Loading PDF: {pdf_path}")
@@ -46,8 +60,3 @@ def load_vectorstore(index_name: str):
         embeddings,
         allow_dangerous_deserialization=True
     )
-```
-
-Actually the real problem is `torch` — it's 2GB alone. Let's switch to a Railway-friendly setup. Add this variable in Railway Variables tab:
-```
-TRANSFORMERS_OFFLINE=1
