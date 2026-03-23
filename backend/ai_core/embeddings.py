@@ -1,7 +1,6 @@
 import os
 import requests
 from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain.embeddings.base import Embeddings
@@ -80,3 +79,12 @@ def ingest_pdf(pdf_path: str, index_name: str):
     vectorstore.save_local(save_path)
     print(f"Saved to {save_path}")
     return vectorstore
+
+def load_vectorstore(index_name: str):
+    embeddings = get_embeddings()
+    save_path = os.path.join(VECTOR_STORE_PATH, index_name)
+    return FAISS.load_local(
+        save_path,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
