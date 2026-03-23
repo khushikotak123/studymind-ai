@@ -41,11 +41,15 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files allowed")
     
     safe_name = file.filename.replace(" ", "_")
-    
-    # Save temporarily for processing
     temp_path = f"/tmp/{safe_name}"
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    
+    contents = await file.read()
+    print(f"File size: {len(contents)} bytes")
+    
+    with open(temp_path, "wb") as f:
+        f.write(contents)
+    
+    print(f"Saved to {temp_path}")
     
     index_name = safe_name.replace(".pdf", "")
     ingest_pdf(temp_path, index_name)
