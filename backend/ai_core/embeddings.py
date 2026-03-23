@@ -1,6 +1,5 @@
 import os
 import requests
-import numpy as np
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -11,22 +10,38 @@ from typing import List
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-VECTOR_STORE_PATH =  "/tmp/vector_store"
+VECTOR_STORE_PATH = "/tmp/vector_store"
 
 class GroqEmbeddings(Embeddings):
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return [self._embed(t) for t in texts]
+        results = []
+        for text in texts:
+            embedding = self._embed(text)
+            results.append(embedding)
+        return results
 
     def embed_query(self, text: str) -> List[float]:
         return self._embed(text)
 
     def _embed(self, text: str) -> List[float]:
-        response = requests.post(
-            "https://api.groq.com/openai/v1/embeddings",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            json={"model": "nomic-embed-text-v1.5", "input": text}
-        )
-        return response.json()["data"][0]["embedding"]
+        try:
+            response = requests.post(
+                "https://api.groq.com/openai/v1/embeddings",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "nomic-embed-text-v1.5",
+                    "input": text[:512]
+                }
+            )
+            data = response.json()
+            print(f"Embed status: {response.status_code}")
+            return data["data"][0]["embedding"]
+        except Exception as e:
+            print(f"Embedding error: {e}")
+            return [0.0] * 768
 
 def get_embeddings():
     return GroqEmbeddings()
