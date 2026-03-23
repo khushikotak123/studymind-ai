@@ -41,26 +41,13 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files allowed")
     
     safe_name = file.filename.replace(" ", "_")
-    file_path = os.path.join(UPLOAD_DIR, safe_name)
     
-    with open(file_path, "wb") as buffer:
+    # Save temporarily for processing
+    temp_path = f"/tmp/{safe_name}"
+    with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     index_name = safe_name.replace(".pdf", "")
-    ingest_pdf(file_path, index_name)
+    ingest_pdf(temp_path, index_name)
     
     return {"message": "PDF uploaded and processed!", "index_name": index_name}
-
-@app.post("/ask")
-async def ask(request: QuestionRequest):
-    answer = ask_question(request.index_name, request.question)
-    return {"answer": answer}
-
-@app.post("/generate-quiz")
-async def quiz(request: QuizRequest):
-    questions = generate_quiz(
-        request.index_name,
-        request.topic,
-        request.num_questions
-    )
-    return {"questions": questions}

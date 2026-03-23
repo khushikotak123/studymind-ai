@@ -11,7 +11,7 @@ from typing import List
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-VECTOR_STORE_PATH = os.path.join(os.path.dirname(__file__), "../../data/vector_store")
+VECTOR_STORE_PATH =  "/tmp/vector_store"
 
 class GroqEmbeddings(Embeddings):
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
