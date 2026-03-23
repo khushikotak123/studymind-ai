@@ -9,10 +9,9 @@ from typing import List
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 VECTOR_STORE_PATH = "/tmp/vector_store"
 
-class GroqEmbeddings(Embeddings):
+class HFEmbeddings(Embeddings):
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         results = []
         for text in texts:
@@ -25,26 +24,25 @@ class GroqEmbeddings(Embeddings):
 
     def _embed(self, text: str) -> List[float]:
         try:
+            HF_TOKEN = os.getenv("HF_TOKEN")
             response = requests.post(
-                "https://api.groq.com/openai/v1/embeddings",
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "nomic-embed-text-v1.5",
-                    "input": text[:512]
-                }
+                "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2",
+                headers={"Authorization": f"Bearer {HF_TOKEN}"},
+                json={"inputs": text[:512]}
             )
             data = response.json()
-            print(f"Embed status: {response.status_code}")
-            return data["data"][0]["embedding"]
+            print(f"HF response: {str(data)[:100]}")
+            if isinstance(data, list):
+                if isinstance(data[0], list):
+                    return data[0]
+                return data
+            return [0.0] * 384
         except Exception as e:
             print(f"Embedding error: {e}")
-            return [0.0] * 768
+            return [0.0] * 384
 
 def get_embeddings():
-    return GroqEmbeddings()
+    return HFEmbeddings()
 
 def ingest_pdf(pdf_path: str, index_name: str):
     print(f"Loading PDF: {pdf_path}")
@@ -75,3 +73,4 @@ def load_vectorstore(index_name: str):
         embeddings,
         allow_dangerous_deserialization=True
     )
+
