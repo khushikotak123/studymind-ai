@@ -26,7 +26,7 @@ class HFEmbeddings(Embeddings):
             HF_TOKEN = os.getenv("HF_TOKEN")
             print(f"HF_TOKEN exists: {bool(HF_TOKEN)}")
             response = requests.post(
-                "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2",
+               "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
                 headers={"Authorization": f"Bearer {HF_TOKEN}"},
                 json={"inputs": text[:512]},
                 timeout=30
