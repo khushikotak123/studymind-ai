@@ -51,14 +51,25 @@ def get_embeddings():
 
 def ingest_pdf(pdf_path: str, index_name: str):
     print(f"Loading PDF: {pdf_path}")
-    loader = PyPDFLoader(pdf_path)
-    docs = loader.load()
-
+    
+    import pdfplumber
+    text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    
+    print(f"Extracted {len(text)} characters")
+    
+    if not text.strip():
+        raise ValueError("Could not extract text from PDF")
+    
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=50
     )
-    chunks = splitter.split_documents(docs)
+    chunks = splitter.create_documents([text])
     print(f"Split into {len(chunks)} chunks")
 
     embeddings = get_embeddings()
@@ -69,12 +80,3 @@ def ingest_pdf(pdf_path: str, index_name: str):
     vectorstore.save_local(save_path)
     print(f"Saved to {save_path}")
     return vectorstore
-
-def load_vectorstore(index_name: str):
-    embeddings = get_embeddings()
-    save_path = os.path.join(VECTOR_STORE_PATH, index_name)
-    return FAISS.load_local(
-        save_path,
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
