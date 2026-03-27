@@ -52,6 +52,31 @@ async def upload_pdf(file: UploadFile = File(...)):
     print(f"Saved to {temp_path}")
     
     index_name = safe_name.replace(".pdf", "")
-    ingest_pdf(temp_path, index_name)
-    
+    try:
+        ingest_pdf(temp_path, index_name)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     return {"message": "PDF uploaded and processed!", "index_name": index_name}
+
+
+@app.post("/ask")
+async def ask(request: QuestionRequest):
+    try:
+        answer = ask_question(request.index_name, request.question)
+        return {"answer": answer}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-quiz")
+async def quiz(request: QuizRequest):
+    try:
+        questions = generate_quiz(request.index_name, request.topic, request.num_questions)
+        return {"questions": questions}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
