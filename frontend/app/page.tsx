@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 
-const API = 'https://studymind-ai-3wnv.onrender.com'
+const API = '/api'
 
 export default function Home() {
   const [indexName, setIndexName] = useState('')

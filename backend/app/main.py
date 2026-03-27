@@ -15,9 +15,9 @@ app = FastAPI(title="StudyMind AI API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost:5000"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../data/raw_pdfs")
